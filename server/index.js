@@ -12,9 +12,15 @@ const
   app = express()
 
 let db
+let client
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+exports.finish = () => {
+  server.close()
+  client.close()
+}
 
 app.use(session({
   secret: 'ojimizucoffee',
@@ -22,15 +28,16 @@ app.use(session({
   saveUninitialized: false
 }))
 
-MongoClient.connect('mongodb://localhost:27017/prekara',(err,client) => {
+MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
   if(err) console.log("err")
   console.log("connected");
-  db = client.db('prekara');
+  db = c.db('prekara');
+  client = c
 })
 
 app.disable('x-powered-by')
 
-app.listen(3000,function(){
+const server = app.listen(3000,function(){
   console.log("Listen Port: " + this.address().port)
 })
 

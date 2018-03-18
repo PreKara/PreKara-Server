@@ -1,0 +1,4 @@
+laungage: node_js
+node_js:
+  - 8.10.0
+services: mongodb
