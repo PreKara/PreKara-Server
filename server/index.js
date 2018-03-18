@@ -58,6 +58,15 @@ app.post(base + "/server",(req,res) => {
     return
   }
 
+  let flag = false
+  db.collection("server").find({server_name:req.body.server_name},(err,result) => {
+    console.log(result)
+    res.status(409).send("Conflict")
+    flag = true
+  })
+
+  if (flag) return
+  // session
   sha512.update(req.body.password)
   db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
     console.log(result)
@@ -65,3 +74,6 @@ app.post(base + "/server",(req,res) => {
   })
 })
 
+app.put(base + "/server",(req,res) => {
+  
+})
