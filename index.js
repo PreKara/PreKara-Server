@@ -30,7 +30,6 @@ app.use(session({
 
 MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
   if(err) console.log("err")
-  console.log("connected");
   db = c.db('prekara');
   client = c
 })
@@ -38,7 +37,6 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 app.disable('x-powered-by')
 
 const server = app.listen(3000,function(){
-  console.log("Listen Port: " + this.address().port)
 })
 
 const base = "/api/v1"
@@ -79,7 +77,6 @@ app.post(base + "/server", async (req,res) => {
   const sha512 = crypto.createHash('sha512')
   sha512.update(req.body.password)
   db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
-    console.log(result)
     req.session.server_id = result.ops[0]._id
     res.status(200).send("{server_id: "+result.ops[0]._id+"}")
   })
@@ -111,7 +108,6 @@ app.put(base + "/server",async (req,res) => {
 
   if(req.body.hasOwnProperty("server_name")) {
     db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"server_name": req.body.server_name}},(err,result) => {
-      console.log(err)
     })
   }
 
@@ -119,7 +115,6 @@ app.put(base + "/server",async (req,res) => {
     const sha512 = crypto.createHash('sha512')
     sha512.update(req.body.password)
     db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"password": sha512.digest('hex')}},(err,result) => {
-      
     })
   }
 
