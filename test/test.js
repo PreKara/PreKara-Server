@@ -23,10 +23,14 @@ describe('server', function() {
         headers: {"Content-type": "application/json"},
         json: {"server_name": "test1","password": "test"}
       };
-      request.post(options)
-      db.collection("server").findOne({server_name:"test1"},(err,result) => {
-        assert.equal(err == null && result != null,true)
-        done()
+      request.post(options,(err,res,body) => {
+        console.log(err)
+        console.log(body)
+        db.collection("server").findOne({server_name:"test1"},(err,result) => {
+          assert.equal(err == null,true)
+          assert.equal(result != null,true)
+          done()
+        })
       })
     }, 1000);
   });
