@@ -1,14 +1,9 @@
 swagger: "2.0"
 info:
-  description: "/apiを叩くとバージョンが取得できます。"
+  description: "PreKaraのバックエンドサーバーのAPIリファレンスです。ライセンス等はリポジトリに準拠します。/apiを叩くとAPIのバージョンが取得できます。"
   version: "0.0.1"
   title: "PreKara Server API.dev"
-  contact:
-    email: "develop@mizucoffee.net"
-  license:
-    name: "MIT"
-    url: "https://kawakawaritsuki.mit-license.org/"
-host: "local.prekara.net"
+host: "local.prekara.mizucoffee.net"
 basePath: "/api/v1"
 tags:
 - name: "server"
@@ -27,7 +22,7 @@ paths:
       tags:
       - "server"
       summary: "新規サーバー"
-      description: "新規サーバー"
+      description: "サーバーを新規作成します"
       operationId: "newServer"
       consumes:
       - "application/json"
@@ -36,36 +31,32 @@ paths:
       parameters:
       - in: "body"
         name: "body"
+        description: "サーバー情報"
         required: true
         schema: 
           type: "object"
           required:
           - "server_name"
+          - "password"
           properties:
             server_name:
               type: "string"
-              example: "New_Server"
+              example: "Server_Name"
             password:
               type: "string"
               example: "password"
       responses:
         200:
           description: "Success"
-          schema:
-            type: "object"
-            properties:
-              server_id:
-                type: "string"
-                example: "abcdefg"
-        405:
-          description: "Invalid parameter"
         409:
           description: "Conflict"
+        405:
+          description: "Invalid parameter"
     put:
       tags:
       - "server"
       summary: "サーバー情報変更"
-      description: ""
+      description: "bodyに'server_name'か'password'の片方かその両方が必要です"
       operationId: "updateServer"
       consumes:
       - "application/json"
@@ -74,12 +65,10 @@ paths:
       parameters:
       - in: "body"
         name: "body"
-        description: ""
+        description: "サーバー情報"
         required: true
         schema:
           type: "object"
-          required:
-          - "server_name"
           properties:
             server_name:
               type: "string"
@@ -88,6 +77,8 @@ paths:
               type: "string"
               example: "new_password"
       responses:
+        200:
+          description: "Success"
         403:
           description: "Forbidden"
         404:
@@ -102,15 +93,73 @@ paths:
       summary: "サーバー削除"
       description: "同時にログアウト(セッションが破棄)されます"
       operationId: "deleteServer"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /session:
+    get:
+      tags:
+      - "session"
+      summary: "セッション状態の取得"
+      description: "Session情報を元に状態が返ります"
+      operationId: "getSession"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+    post:
+      tags:
+      - "session"
+      summary: "セッションログイン"
+      description: "ログインします。Cookieに記録されます。"
+      operationId: "postSession"
       consumes:
       - "application/json"
       produces:
       - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: true
+        schema: 
+          type: "object"
+          required:
+          - "server_name"
+          - "password"
+          properties:
+            server_name:
+              type: "string"
+              example: "New_Server"
+            password:
+              type: "string"
+              example: "password"
       responses:
+        200:
+          description: "Success"
+        405:
+          description: "Invalid parameter"
         403:
           description: "Forbidden"
-        405:
-          description: "Input parameter"
+    delete:
+      tags:
+      - "session"
+      summary: "セッション破棄"
+      description: "セッションを破棄します。ログアウトと同義です。"
+      operationId: "revokeSession"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
   /image:
     get:
       tags:
@@ -187,15 +236,6 @@ paths:
           description: "Forbidden"
         404:
           description: "Not Found"
-  /session:
-    get:
-      tags:
-      - "session"
-      summary: "セッション状態の取得"
-      operationId: "getSession"
-      responses:
-        403:
-          description: "Forbidden"
 definitions:
   ApiResponse:
     type: "object"
@@ -207,6 +247,4 @@ definitions:
         type: "string"
       message:
         type: "string"
-externalDocs:
-  description: "Find out more about Swagger"
-  url: "http://swagger.io"
+
