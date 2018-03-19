@@ -16,5 +16,5 @@ $ npm start
 
 ## API Reference
 
-[<img src="https://github.com/KawakawaRitsuki/Image/blob/master/swagger-logo-horizontal.jpeg?raw=true" alt="Swagger" style="width: 200px;"/>](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/PreKara/PreKara-Server/master/swagger.yaml)
+[<img src="https://github.com/KawakawaRitsuki/Image/blob/master/swagger-logo-horizontal.jpeg?raw=true" alt="Swagger" width="200px"/>](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/PreKara/PreKara-Server/master/swagger.yaml)
 
