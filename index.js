@@ -1,7 +1,6 @@
 'use strict'
 
 const
-  config = require('config'),
   express = require('express'),
   session = require('express-session'),
   bodyParser = require('body-parser'),
