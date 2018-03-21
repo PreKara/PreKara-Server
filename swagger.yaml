@@ -128,7 +128,7 @@ paths:
       - in: "body"
         name: "body"
         required: true
-        schema: 
+        schema:
           type: "object"
           required:
           - "server_name"
@@ -143,10 +143,12 @@ paths:
       responses:
         200:
           description: "Success"
-        405:
-          description: "Invalid parameter"
         403:
           description: "Forbidden"
+        404:
+          description: "Not Found"
+        405:
+          description: "Invalid parameter"
     delete:
       tags:
       - "session"

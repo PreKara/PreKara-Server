@@ -93,7 +93,7 @@ app.post(base + "/server", async (req,res) => {
     res.status(500).send("Internal Error")
     return
   }else{
-    res.send("{server_id: "+r2+"}")
+    res.send("{server_id: \""+r2+"\"}")
   }
 })
 
@@ -116,7 +116,7 @@ app.put(base + "/server",async (req,res) => {
           reject("found")
       })
     })
-    ).catch(() => "error")
+    ).catch(() => "err")
 
     if (r1 == "found") {
       res.status(409).send("Conflict")
@@ -182,11 +182,57 @@ app.delete(base + "/server",async (req,res) => {
 
 })
 
+// =====================
+//        Session
+// =====================
+
 // Get Session
 
 app.get(base + "/session",(req,res) => {
   if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
   res.send({server_id: req.session.server_id})
+})
+
+app.post(base + "/session",async (req,res) => {
+  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")){
+    res.status(405).send("Invalid parameter")
+    return
+  }
+
+  const sha512_req = crypto.createHash('sha512')
+  sha512_req.update(req.body.password)
+
+  const r1 = await (new Promise((resolve,reject) => {
+    db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
+      if(err) { reject("err"); return }
+      if(result != null)
+        resolve(result)
+      else
+        reject("notfound")
+    })
+  })
+  ).catch(() => "err")
+
+  if (r1 == "notfound") {
+    res.status(404).send("Not Found")
+    return
+  }else if(r1 == "err"){
+    res.status(500).send("Internal Error")
+    return
+  }
+
+  if(r1.password == sha512_req.digest('hex')){
+    req.session.server_id = r1._id
+    res.send("{server_id: \""+r1._id+"\"}")
+  }else{
+    res.status(403).send("Forbidden")
+  }
+})
+
+app.delete(base + "/session",async (req,res) => {
+  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
+  req.session.destroy();
+  res.send("success")
 })
 
 function hasSession(req){

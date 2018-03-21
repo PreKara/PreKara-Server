@@ -59,12 +59,42 @@ describe('DB', function() {
       done()
     })
   })
-  // logout
-  // relogin
+  it('Revoke Session', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/session",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.delete(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      done()
+    })
+  })
+  it('Get Session (no auth)', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/session",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(res.statusCode,403)
+      done()
+    })
+  })
+  it('Relogin Session', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/session",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"server_name": "test2","password": "test"}
+    };
+    request.post(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      cookie = res.headers['set-cookie'][0];
+      done()
+    })
+  })
   it('Delete Server', function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/server",
-      headers: {"Content-type": "application/json","Cookie": cookie}
+      headers: {"Content-type": "application/json","Cookie": cookie},
     };
     request.delete(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
