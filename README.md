@@ -16,7 +16,7 @@
 ```
 $ npm run install
 $ npm run build
-$ PORT=80 npm run start
+$ PORT=<Port default=3000> npm run start
 ```
 
 ## API Reference

@@ -217,7 +217,7 @@ app.delete(base + "/session",async (req,res) => {
 
 app.get(base + "/image", async (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(req.query.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
+  if(!req.query.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
 
 
   if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_name)) return res.status(404).send("Not Found")
@@ -246,7 +246,15 @@ app.post(base + "/image", (req, res) => {
   })
 })
 
+app.delete(base + "/image", async (req, res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!req.body.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
 
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_name)) return res.status(404).send("Not Found")
+  fs.removeSync('./images/' + req.session.server_id+ '/' + req.body.image_name)
+
+  res.send("success");
+})
 
 app.get(base + "/image/list", (req,res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")

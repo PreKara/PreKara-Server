@@ -211,9 +211,9 @@ paths:
         schema:
           type: "object"
           required:
-          - "image_id"
+          - "image_name"
           properties:
-            server_name:
+            image_name:
               type: "string"
               example: "example.jpg"
       responses:
