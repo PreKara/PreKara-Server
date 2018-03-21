@@ -12,6 +12,7 @@ const
   uniqid = require('uniqid'),
   path = require('path'),
   fs = require("fs-extra"),
+  mime = require("mime"),
   app = express()
 
 let db
@@ -214,6 +215,28 @@ app.delete(base + "/session",async (req,res) => {
 //        image
 // =====================
 
+app.get(base + "/image", async (req, res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(req.query.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
+
+
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_name)) return res.status(404).send("Not Found")
+
+  const r1 = await (new Promise((resolve,reject) => {
+    fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_name, function(err, data) {
+      if(err) return reject("err")
+      resolve(data)
+    });
+  })
+  ).catch((e) => e)
+
+  if(r1 == "err") return res.status(500).send("Internal Error")
+
+  res.setHeader('Content-Type', mime.getType(req.query.image_name));
+  res.send(r1);
+  res.end();
+})
+
 app.post(base + "/image", (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
 
@@ -235,5 +258,14 @@ app.get(base + "/image/list", (req,res) => {
 
 function hasSession(req){
   return req.session.hasOwnProperty("server_id")
+}
+
+function isExist(file) {
+  try {
+    fs.statSync(file);
+    return true
+  } catch(err) {
+    if(err.code === 'ENOENT') return false
+  }
 }
 

@@ -16,7 +16,7 @@
 ```
 $ npm run install
 $ npm run build
-$ npm run start
+$ PORT=80 npm run start
 ```
 
 ## API Reference

@@ -33,7 +33,7 @@ paths:
         name: "body"
         description: "サーバー情報"
         required: true
-        schema: 
+        schema:
           type: "object"
           required:
           - "server_name"
@@ -170,7 +170,7 @@ paths:
       operationId: "getImage"
       parameters:
       - in: "query"
-        name: "image_id"
+        name: "image_name"
         type: "string"
         description: "取得する画像のID"
         required: true
@@ -215,12 +215,14 @@ paths:
           properties:
             server_name:
               type: "string"
-              example: "New_Server_Name"
+              example: "example.jpg"
       responses:
         403:
           description: "Forbidden"
         404:
           description: "Not Found"
+        405:
+          description: "Invalid parameter"
   /image/list:
     get:
       tags:
