@@ -14,8 +14,9 @@
 ## How to build
 
 ```
-$ npm install
-$ npm start
+$ npm run install
+$ npm run build
+$ npm run start
 ```
 
 ## API Reference

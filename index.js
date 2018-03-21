@@ -19,6 +19,7 @@ let client
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'))
 
 exports.finish = () => {
   server.close()
@@ -54,7 +55,7 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 
 app.disable('x-powered-by')
 
-const server = app.listen(3000,function(){})
+const server = app.listen(process.env.PORT || 3000,function(){})
 
 const base = "/api/v1"
 
