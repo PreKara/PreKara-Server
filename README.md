@@ -7,6 +7,10 @@
 
 ![banner](https://raw.githubusercontent.com/KawakawaRitsuki/Image/master/PreKara-banner-server.png)
 
+## Dependencies
+
+- MongoDB
+
 ## How to build
 
 ```

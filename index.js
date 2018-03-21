@@ -36,8 +36,7 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 
 app.disable('x-powered-by')
 
-const server = app.listen(3000,function(){
-})
+const server = app.listen(3000,function(){})
 
 const base = "/api/v1"
 
@@ -53,34 +52,53 @@ app.get("/api/",(req,res) => {
 //        Server
 // =====================
 
+// New Server
+
 app.post(base + "/server", async (req,res) => {
   if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")){
     res.status(405).send("Invalid parameter")
     return
   }
 
-  const resu = await (new Promise((resolve,reject) => {
+  const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-      if(err == null && result == null)
-        resolve(result)
+      if(err) { reject("err"); return }
+      if(result == null)
+        resolve(null)
       else
         reject("notfound")
     })
   })
-  ).catch(() => "notfound")
+  ).catch(() => "err")
 
-  if (resu != null) {
+  if (r1 == "notfound") {
     res.status(409).send("Conflict")
+    return
+  }else if(r1 == "err"){
+    res.status(500).send("Internal Error")
     return
   }
 
-  const sha512 = crypto.createHash('sha512')
-  sha512.update(req.body.password)
-  db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
-    req.session.server_id = result.ops[0]._id
-    res.status(200).send("{server_id: "+result.ops[0]._id+"}")
+  const r2 = await (new Promise((resolve,reject) => {
+    const sha512 = crypto.createHash('sha512')
+    sha512.update(req.body.password)
+    db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
+      if(err) { reject("err"); return }
+      req.session.server_id = result.ops[0]._id
+      resolve(result.ops[0]._id);
+    })
   })
+  ).catch(() => "err")
+
+  if(r2 == "err"){
+    res.status(500).send("Internal Error")
+    return
+  }else{
+    res.send("{server_id: "+r2+"}")
+  }
 })
+
+// Edit Server
 
 app.put(base + "/server",async (req,res) => {
   if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
@@ -90,37 +108,82 @@ app.put(base + "/server",async (req,res) => {
   }
 
   if(req.body.hasOwnProperty("server_name")){
-    const resu = await (new Promise((resolve,reject) => {
+    const r1 = await (new Promise((resolve,reject) => {
       db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-        if(err == null && result == null)
-          resolve(result)
+        if(err) { reject("err"); return }
+        if(result == null)
+          resolve(null)
         else
-          reject("notfound")
+          reject("found")
       })
     })
-    ).catch(() => "notfound")
+    ).catch(() => "error")
 
-    if (resu != null) {
+    if (r1 == "found") {
       res.status(409).send("Conflict")
+      return
+    }else if(r1 == "err"){
+      res.status(500).send("Internal Error")
       return
     }
   }
 
   if(req.body.hasOwnProperty("server_name")) {
-    db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"server_name": req.body.server_name}},(err,result) => {
+    const r2 = await (new Promise((resolve,reject) => {
+      db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"server_name": req.body.server_name}},(err,result) => {
+        if(err) { reject("err"); return }
+        resolve(null);
+      })
     })
+    ).catch(() => "err");
+    if(r2 == "err"){
+      res.status(500).send("Internal Error")
+      return
+    }
   }
 
   if(req.body.hasOwnProperty("password")){
-    const sha512 = crypto.createHash('sha512')
-    sha512.update(req.body.password)
-    db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"password": sha512.digest('hex')}},(err,result) => {
+    const r3 = await (new Promise((resolve,reject) => {
+      const sha512 = crypto.createHash('sha512')
+      sha512.update(req.body.password)
+      db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"password": sha512.digest('hex')}},(err,result) => {
+        if(err) { reject("err"); return }
+        resolve(null);
+      })
     })
+    ).catch(() => "err")
+    if(r3 == "err"){
+      res.status(500).send("Internal Error")
+      return
+    }
   }
 
   res.send("success")
 
 })
+
+// Delete Server
+
+app.delete(base + "/server",async (req,res) => {
+  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
+
+  const r1 = await (new Promise((resolve,reject) => {
+    db.collection("server").deleteOne({"_id": ObjectID(req.session.server_id)},(err,result) => {
+      if (err) { reject("error"); return }
+      resolve(null);
+    })
+  })
+  ).catch(() => "err")
+
+  if (r1 == "err") {
+    res.status(500).send("Internal Error")
+    return
+  }
+  res.send("success");
+
+})
+
+// Get Session
 
 app.get(base + "/session",(req,res) => {
   if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
