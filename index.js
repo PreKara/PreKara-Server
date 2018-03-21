@@ -11,7 +11,7 @@ const
   multer = require('multer'),
   uniqid = require('uniqid'),
   path = require('path'),
-  mkdirp = require("mkdirp"),
+  fs = require("fs-extra"),
   app = express()
 
 let db
@@ -27,10 +27,7 @@ exports.finish = () => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    mkdirp( './images/' + req.session.server_id + '/', function (err) {
-      if (err) return cb(err)
-      cb(null, './images/' + req.session.server_id + '/')
-    })
+    cb(null, './images/' + req.session.server_id + '/')
   },
   filename: function (req, file, cb) {
     cb(null, uniqid() + path.extname(file.originalname))
@@ -39,11 +36,7 @@ const storage = multer.diskStorage({
 
 const uploader = multer({ storage: storage, fileFilter: function (req, file, cb) {
   const ext = path.extname(file.originalname)
-  console.log(ext)
-  if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png' && ext !== '.gif' && ext !== '.bmp') {
-    return cb(null,false,'not image')
-  }
-
+  if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png' && ext !== '.gif' && ext !== '.bmp') return cb(null,false,'not image')
   cb(null, true)
 }}).single("image");
 
@@ -69,9 +62,7 @@ const base = "/api/v1"
 //        Version
 // =====================
 
-app.get("/api/",(req,res) => {
-  res.send('{"version":"v1"}')
-})
+app.get("/api/",(req,res) => res.json({"version":"v1"}))
 
 // =====================
 //        Server
@@ -89,7 +80,7 @@ app.post(base + "/server", async (req,res) => {
       resolve(null)
     })
   })
-  ).catch(() => "err")
+  ).catch((e) => e)
 
   if(r1 == "notfound") return res.status(409).send("Conflict")
   if(r1 == "err")       return res.status(500).send("Internal Error")
@@ -100,13 +91,14 @@ app.post(base + "/server", async (req,res) => {
     db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
       if(err) return reject("err")
       req.session.server_id = result.ops[0]._id
+      fs.mkdirsSync('./images/' + result.ops[0]._id + '/');
       resolve(result.ops[0]._id);
     })
   })
-  ).catch(() => "err")
+  ).catch((e) => e)
 
   if(r2 == "err") return res.status(500).send("Internal Error")
-  res.send("{server_id: \""+r2+"\"}")
+  res.json({server_id: r2})
 })
 
 // Edit Server
@@ -123,7 +115,7 @@ app.put(base + "/server",async (req,res) => {
         resolve(null)
       })
     })
-    ).catch(() => "err")
+    ).catch((e) => e)
 
     if (r1 == "found") return res.status(409).send("Conflict")
     if(r1 == "err")    return res.status(500).send("Internal Error")
@@ -136,7 +128,7 @@ app.put(base + "/server",async (req,res) => {
         resolve(null);
       })
     })
-    ).catch(() => "err");
+    ).catch((e) => e);
     if(r2 == "err") return res.status(500).send("Internal Error")
   }
 
@@ -149,7 +141,7 @@ app.put(base + "/server",async (req,res) => {
         resolve(null);
       })
     })
-    ).catch(() => "err")
+    ).catch((e) => e)
     if(r3 == "err") return res.status(500).send("Internal Error")
   }
 
@@ -168,9 +160,11 @@ app.delete(base + "/server",async (req,res) => {
       resolve(null);
     })
   })
-  ).catch(() => "err")
+  ).catch((e) => e)
 
   if (r1 == "err") return res.status(500).send("Internal Error")
+  fs.removeSync('./images/' + req.session.server_id + '/');
+  req.session.destroy();
   res.send("success");
 
 })
@@ -183,7 +177,7 @@ app.delete(base + "/server",async (req,res) => {
 
 app.get(base + "/session",(req,res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
-  res.send({server_id: req.session.server_id})
+  res.json({server_id: req.session.server_id})
 })
 
 app.post(base + "/session",async (req,res) => {
@@ -199,7 +193,7 @@ app.post(base + "/session",async (req,res) => {
       resolve(result)
     })
   })
-  ).catch(() => "err")
+  ).catch((e) => e)
 
   if(r1 == "notfound")                        return res.status(404).send("Not Found")
   if(r1 == "err")                             return res.status(500).send("Internal Error")
@@ -223,16 +217,22 @@ app.post(base + "/image", (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
 
   uploader(req,res,(err) => {
-    console.log(err)
     if(err) return res.status(405).send("Invalid file");
-
     res.send("success")
   })
+})
+
+
+
+app.get(base + "/image/list", (req,res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
+    if (err) return res.status(500).send("Internal Error")
+    return res.send(JSON.stringify(files));
+  });
 })
 
 function hasSession(req){
   return req.session.hasOwnProperty("server_id")
 }
 
-// server削除時に画像削除
-// serverリネーム時に削除
