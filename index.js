@@ -8,6 +8,10 @@ const
   ObjectID = mongodb.ObjectID,
   MongoClient = mongodb.MongoClient,
   crypto = require('crypto'),
+  multer = require('multer'),
+  uniqid = require('uniqid'),
+  path = require('path'),
+  mkdirp = require("mkdirp"),
   app = express()
 
 let db
@@ -20,6 +24,28 @@ exports.finish = () => {
   server.close()
   client.close()
 }
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    mkdirp( './images/' + req.session.server_id + '/', function (err) {
+      if (err) return cb(err)
+      cb(null, './images/' + req.session.server_id + '/')
+    })
+  },
+  filename: function (req, file, cb) {
+    cb(null, uniqid() + path.extname(file.originalname))
+  }
+})
+
+const uploader = multer({ storage: storage, fileFilter: function (req, file, cb) {
+  const ext = path.extname(file.originalname)
+  console.log(ext)
+  if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png' && ext !== '.gif' && ext !== '.bmp') {
+    return cb(null,false,'not image')
+  }
+
+  cb(null, true)
+}}).single("image");
 
 app.use(session({
   secret: 'ojimizucoffee',
@@ -54,91 +80,64 @@ app.get("/api/",(req,res) => {
 // New Server
 
 app.post(base + "/server", async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")){
-    res.status(405).send("Invalid parameter")
-    return
-  }
+  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-      if(err) { reject("err"); return }
-      if(result == null)
-        resolve(null)
-      else
-        reject("notfound")
+      if(err)            return reject("err")
+      if(result != null) return reject("notfound")
+      resolve(null)
     })
   })
   ).catch(() => "err")
 
-  if (r1 == "notfound") {
-    res.status(409).send("Conflict")
-    return
-  }else if(r1 == "err"){
-    res.status(500).send("Internal Error")
-    return
-  }
+  if(r1 == "notfound") return res.status(409).send("Conflict")
+  if(r1 == "err")       return res.status(500).send("Internal Error")
 
   const r2 = await (new Promise((resolve,reject) => {
     const sha512 = crypto.createHash('sha512')
     sha512.update(req.body.password)
     db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
-      if(err) { reject("err"); return }
+      if(err) return reject("err")
       req.session.server_id = result.ops[0]._id
       resolve(result.ops[0]._id);
     })
   })
   ).catch(() => "err")
 
-  if(r2 == "err"){
-    res.status(500).send("Internal Error")
-    return
-  }else{
-    res.send("{server_id: \""+r2+"\"}")
-  }
+  if(r2 == "err") return res.status(500).send("Internal Error")
+  res.send("{server_id: \""+r2+"\"}")
 })
 
 // Edit Server
 
 app.put(base + "/server",async (req,res) => {
-  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
-  if(!req.body.hasOwnProperty("server_name") && !req.body.hasOwnProperty("password")){
-    res.status(405).send("Invalid parameter")
-    return
-  }
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!req.body.hasOwnProperty("server_name") && !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
 
   if(req.body.hasOwnProperty("server_name")){
     const r1 = await (new Promise((resolve,reject) => {
       db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-        if(err) { reject("err"); return }
-        if(result == null)
-          resolve(null)
-        else
-          reject("found")
+        if(err)            return reject("err")
+        if(result != null) return reject("found")
+        resolve(null)
       })
     })
     ).catch(() => "err")
 
-    if (r1 == "found") {
-      res.status(409).send("Conflict")
-      return
-    }else if(r1 == "err"){
-      res.status(500).send("Internal Error")
-      return
-    }
+    if (r1 == "found") return res.status(409).send("Conflict")
+    if(r1 == "err")    return res.status(500).send("Internal Error")
   }
 
   if(req.body.hasOwnProperty("server_name")) {
     const r2 = await (new Promise((resolve,reject) => {
       db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"server_name": req.body.server_name}},(err,result) => {
-        if(err) { reject("err"); return }
+        if(err) return reject("err")
         resolve(null);
       })
     })
     ).catch(() => "err");
-    if(r2 == "err"){
-      res.status(500).send("Internal Error")
-      return
-    }
+    if(r2 == "err") return res.status(500).send("Internal Error")
   }
 
   if(req.body.hasOwnProperty("password")){
@@ -146,15 +145,12 @@ app.put(base + "/server",async (req,res) => {
       const sha512 = crypto.createHash('sha512')
       sha512.update(req.body.password)
       db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"password": sha512.digest('hex')}},(err,result) => {
-        if(err) { reject("err"); return }
+        if(err) return reject("err")
         resolve(null);
       })
     })
     ).catch(() => "err")
-    if(r3 == "err"){
-      res.status(500).send("Internal Error")
-      return
-    }
+    if(r3 == "err") return res.status(500).send("Internal Error")
   }
 
   res.send("success")
@@ -164,20 +160,17 @@ app.put(base + "/server",async (req,res) => {
 // Delete Server
 
 app.delete(base + "/server",async (req,res) => {
-  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").deleteOne({"_id": ObjectID(req.session.server_id)},(err,result) => {
-      if (err) { reject("error"); return }
+      if (err) return reject("err")
       resolve(null);
     })
   })
   ).catch(() => "err")
 
-  if (r1 == "err") {
-    res.status(500).send("Internal Error")
-    return
-  }
+  if (r1 == "err") return res.status(500).send("Internal Error")
   res.send("success");
 
 })
@@ -189,52 +182,57 @@ app.delete(base + "/server",async (req,res) => {
 // Get Session
 
 app.get(base + "/session",(req,res) => {
-  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
   res.send({server_id: req.session.server_id})
 })
 
 app.post(base + "/session",async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")){
-    res.status(405).send("Invalid parameter")
-    return
-  }
+  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
 
   const sha512_req = crypto.createHash('sha512')
   sha512_req.update(req.body.password)
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-      if(err) { reject("err"); return }
-      if(result != null)
-        resolve(result)
-      else
-        reject("notfound")
+      if(err)            return reject("err")
+      if(result == null) return reject("notfound")
+      resolve(result)
     })
   })
   ).catch(() => "err")
 
-  if (r1 == "notfound") {
-    res.status(404).send("Not Found")
-    return
-  }else if(r1 == "err"){
-    res.status(500).send("Internal Error")
-    return
-  }
+  if(r1 == "notfound")                        return res.status(404).send("Not Found")
+  if(r1 == "err")                             return res.status(500).send("Internal Error")
+  if(r1.password != sha512_req.digest('hex')) return res.status(403).send("Forbidden")
 
-  if(r1.password == sha512_req.digest('hex')){
-    req.session.server_id = r1._id
-    res.send("{server_id: \""+r1._id+"\"}")
-  }else{
-    res.status(403).send("Forbidden")
-  }
+  req.session.server_id = r1._id
+  res.send("{server_id: \""+r1._id+"\"}")
 })
 
 app.delete(base + "/session",async (req,res) => {
-  if(!hasSession(req)) {res.status(403).send("Forbidden"); return }
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
   req.session.destroy();
   res.send("success")
+})
+
+// =====================
+//        image
+// =====================
+
+app.post(base + "/image", (req, res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+
+  uploader(req,res,(err) => {
+    console.log(err)
+    if(err) return res.status(405).send("Invalid file");
+
+    res.send("success")
+  })
 })
 
 function hasSession(req){
   return req.session.hasOwnProperty("server_id")
 }
+
+// server削除時に画像削除
+// serverリネーム時に削除

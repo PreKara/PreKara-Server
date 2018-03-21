@@ -108,6 +108,10 @@ describe('DB', function() {
   after(function() {
     client.close()
     index.finish()
-    // runs after all tests in this block
   });
 });
+
+// 画像POST
+// 画像取得 => ハッシュで同一性チェック
+// 画像一覧取得
+// 画像削除
