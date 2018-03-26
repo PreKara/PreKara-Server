@@ -106,6 +106,18 @@ describe('DB', function() {
       })
     })
   })
+  it('Get Theme List (no theme)', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/theme/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(err,null)
+      assert.equal(res.statusCode,200)
+      assert.equal(JSON.parse(body).list.length,0)
+      done()
+    })
+  })
   it('Post Image', function (done) {
     request.get("https://raw.githubusercontent.com/KawakawaRitsuki/Image/master/PreKara-banner-server.png", {encoding: 'binary'}, function(error, response, body) {
       fs.writeFile('image.png', body, 'binary', function (err) {
@@ -140,6 +152,18 @@ describe('DB', function() {
       });
     });
   })
+  it('Get Image List',function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/image/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(err,null)
+      assert.equal(res.statusCode,200)
+      assert.equal(JSON.parse(body).images.length,1)
+      done()
+    })
+  })
   it('Delete Image', function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/image",
@@ -151,7 +175,7 @@ describe('DB', function() {
       done()
     })
   })
-  it('Get Image List',function (done) {
+  it('Get Image List (no image)',function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/image/list",
       headers: {"Content-type": "application/json","Cookie": cookie},
