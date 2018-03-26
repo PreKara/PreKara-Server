@@ -168,24 +168,6 @@ paths:
         403:
           description: "Forbidden"
   /theme:
-    get:
-      tags:
-      - "theme"
-      summary: "お題の取得"
-      operationId: "getTheme"
-      parameters:
-      - in: "query"
-        name: "theme_id"
-        type: "string"
-        description: "取得するお題のID"
-        required: true
-      responses:
-        200:
-          description: "Success"
-        403:
-          description: "Forbiddenm"
-        404:
-          description: "Not Found"
     post:
       tags:
       - "theme"
@@ -208,10 +190,10 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
-        404:
-          description: "Not Found"
         405:
           description: "Invalid parameter"
+        409:
+          description: "Conflict"
     delete:
       tags:
       - "theme"

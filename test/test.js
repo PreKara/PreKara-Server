@@ -7,6 +7,7 @@ const MongoClient = mongodb.MongoClient
 let db
 let client
 let cookie
+let theme
 
 MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
   if(err) console.log("err")
@@ -57,6 +58,37 @@ describe('DB', function() {
     request.get(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
       done()
+    })
+  })
+  it('Post Theme', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/theme",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"theme": "test_theme"}
+    };
+    request.post(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      theme = body.theme_id
+      db.collection("theme").findOne({theme:"test_theme"},(err,result) => {
+        assert.equal(err == null,true)
+        assert.equal(result != null,true)
+        done()
+      })
+    })
+  })
+  it('Delete Theme', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/theme",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"theme_id":theme}
+    };
+    request.delete(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      db.collection("theme").findOne({theme:"test_theme"},(err,result) => {
+        assert.equal(err, null)
+        assert.equal(result, null)
+        done()
+      })
     })
   })
   it('Revoke Session', function (done) {

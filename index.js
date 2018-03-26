@@ -78,13 +78,13 @@ app.post(base + "/server", async (req,res) => {
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
       if(err)            return reject("err")
-      if(result != null) return reject("notfound")
+      if(result != null) return reject("found")
       resolve(null)
     })
   })
   ).catch((e) => e)
 
-  if(r1 == "notfound") return res.status(409).send("Conflict")
+  if(r1 == "found") return res.status(409).send("Conflict")
   if(r1 == "err")       return res.status(500).send("Internal Error")
 
   const r2 = await (new Promise((resolve,reject) => {
@@ -210,6 +210,55 @@ app.delete(base + "/session",async (req,res) => {
   req.session.destroy();
   res.send("success")
 })
+
+// =====================
+//        theme
+// =====================
+
+app.post(base + "/theme",async (req,res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!req.body.hasOwnProperty("theme")) return res.status(405).send("Invalid parameter") 
+
+  const r1 = await (new Promise((resolve,reject) => {
+    db.collection("theme").findOne({theme:req.body.theme},(err,result) => {
+      if(err)            return reject("err")
+      if(result != null) return reject("found")
+      resolve(null)
+    })
+  })
+  ).catch((e) => e)
+
+  if(r1 == "found") return res.status(409).send("Conflict")
+  if(r1 == "err")       return res.status(500).send("Internal Error")
+
+  const r2 = await (new Promise((resolve,reject) => {
+    db.collection("theme").insert({theme: req.body.theme},(err,result) => {
+      if(err) return reject("err")
+      resolve(result.ops[0]._id);
+    })
+  })
+  ).catch((e) => e)
+
+  if(r2 == "err") return res.status(500).send("Internal Error")
+  res.json({result: "success",theme_id: r2})
+
+})
+app.delete(base + "/theme",async (req,res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!req.body.hasOwnProperty("theme_id")) return res.status(405).send("Invalid parameter")
+
+  const r1 = await (new Promise((resolve,reject) => {
+    db.collection("theme").deleteOne({"_id": ObjectID(req.body.theme_id)},(err,result) => {
+      if (err) return reject("err")
+      resolve(null);
+    })
+  })
+  ).catch((e) => e)
+
+  if (r1 == "err") return res.status(500).send("Internal Error")
+  res.json({result: "success"})
+})
+
 
 // =====================
 //        image
