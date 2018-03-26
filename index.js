@@ -65,7 +65,7 @@ const base = "/api/v1"
 //        Version
 // =====================
 
-app.get("/api/",(req,res) => res.json({"version":"v1"}))
+app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
 
 // =====================
 //        Server
@@ -74,7 +74,7 @@ app.get("/api/",(req,res) => res.json({"version":"v1"}))
 // New Server
 
 app.post(base + "/server", async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
+  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).json({result:"err",status:405, err:"invalid parameter"})
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
@@ -85,8 +85,8 @@ app.post(base + "/server", async (req,res) => {
   })
   ).catch((e) => e)
 
-  if(r1 == "found") return res.status(409).send("Conflict")
-  if(r1 == "err")       return res.status(500).send("Internal Error")
+  if(r1 == "found") return res.status(409).json({result: "err",status:409,err: "conflict"})
+  if(r1 == "err")       return res.status(500).json({result: "err",status:500 , err: "internal error"})
 
   const r2 = await (new Promise((resolve,reject) => {
     const sha512 = crypto.createHash('sha512')
@@ -100,15 +100,15 @@ app.post(base + "/server", async (req,res) => {
   })
   ).catch((e) => e)
 
-  if(r2 == "err") return res.status(500).send("Internal Error")
-  res.json({server_id: r2})
+  if(r2 == "err") return res.status(500).json({result: "err",status:500, err:"internal error"})
+  res.json({result:"ok",status:200,server_id: r2})
 })
 
 // Edit Server
 
 app.put(base + "/server",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.body.hasOwnProperty("server_name") && !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403, err:"forbidden"})
+  if(!req.body.hasOwnProperty("server_name") && !req.body.hasOwnProperty("password")) return res.status(405).json({result: "err",status:405,err: "invalid parameter"})
 
   if(req.body.hasOwnProperty("server_name")){
     const r1 = await (new Promise((resolve,reject) => {
@@ -120,8 +120,8 @@ app.put(base + "/server",async (req,res) => {
     })
     ).catch((e) => e)
 
-    if (r1 == "found") return res.status(409).send("Conflict")
-    if(r1 == "err")    return res.status(500).send("Internal Error")
+    if (r1 == "found") return res.status(409).json({result:"err",status:409, err:"conflict"})
+    if (r1 == "err")    return res.status(500).json({result:"err",status:500, err:"internal error"})
   }
 
   if(req.body.hasOwnProperty("server_name")) {
@@ -132,7 +132,7 @@ app.put(base + "/server",async (req,res) => {
       })
     })
     ).catch((e) => e);
-    if(r2 == "err") return res.status(500).send("Internal Error")
+    if(r2 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
   }
 
   if(req.body.hasOwnProperty("password")){
@@ -145,17 +145,17 @@ app.put(base + "/server",async (req,res) => {
       })
     })
     ).catch((e) => e)
-    if(r3 == "err") return res.status(500).send("Internal Error")
+    if(r3 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
   }
 
-  res.send("success")
+  res.json({result:"ok",status:200})
 
 })
 
 // Delete Server
 
 app.delete(base + "/server",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("server").deleteOne({"_id": ObjectID(req.session.server_id)},(err,result) => {
@@ -165,10 +165,10 @@ app.delete(base + "/server",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if (r1 == "err") return res.status(500).send("Internal Error")
+  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
   fs.removeSync('./images/' + req.session.server_id + '/');
   req.session.destroy();
-  res.send("success");
+  res.json({result:"ok",status:200});
 
 })
 
@@ -179,12 +179,12 @@ app.delete(base + "/server",async (req,res) => {
 // Get Session
 
 app.get(base + "/session",(req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  res.json({server_id: req.session.server_id})
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
+  res.json({result:"ok",status:200,server_id: req.session.server_id})
 })
 
 app.post(base + "/session",async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).send("Invalid parameter")
+  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
 
   const sha512_req = crypto.createHash('sha512')
   sha512_req.update(req.body.password)
@@ -198,18 +198,18 @@ app.post(base + "/session",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if(r1 == "notfound")                        return res.status(404).send("Not Found")
-  if(r1 == "err")                             return res.status(500).send("Internal Error")
-  if(r1.password != sha512_req.digest('hex')) return res.status(403).send("Forbidden")
+  if(r1 == "notfound")                        return res.status(404).json({result:"err",status:404,err:"not found"})
+  if(r1 == "err")                             return res.status(500).json({result:"err",status:500,err:"internal error"})
+  if(r1.password != sha512_req.digest('hex')) return res.status(403).json({result:"err",status:403,err:"forbidden"})
 
   req.session.server_id = r1._id
-  res.send("{server_id: \""+r1._id+"\"}")
+  res.json({result:"ok",status:200,server_id: r1._id})
 })
 
 app.delete(base + "/session",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
   req.session.destroy();
-  res.send("success")
+  res.json({result:"ok",status:200})
 })
 
 // =====================
@@ -217,8 +217,8 @@ app.delete(base + "/session",async (req,res) => {
 // =====================
 
 app.post(base + "/theme",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.body.hasOwnProperty("theme")) return res.status(405).send("Invalid parameter") 
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
+  if(!req.body.hasOwnProperty("theme")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("theme").findOne({theme:req.body.theme},(err,result) => {
@@ -229,8 +229,8 @@ app.post(base + "/theme",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if(r1 == "found") return res.status(409).send("Conflict")
-  if(r1 == "err")       return res.status(500).send("Internal Error")
+  if(r1 == "found") return res.status(409).json({result:"err",status:409,err:"conflict"})
+  if(r1 == "err")       return res.status(500).json({result:"err",status:500,err:"internal error"})
 
   const r2 = await (new Promise((resolve,reject) => {
     db.collection("theme").insert({theme: req.body.theme},(err,result) => {
@@ -240,13 +240,12 @@ app.post(base + "/theme",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if(r2 == "err") return res.status(500).send("Internal Error")
-  res.json({result: "success",theme_id: r2})
-
+  if(r2 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
+  res.json({result: "ok",status:200,theme_id: r2})
 })
 app.delete(base + "/theme",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.body.hasOwnProperty("theme_id")) return res.status(405).send("Invalid parameter")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
+  if(!req.body.hasOwnProperty("theme_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("theme").deleteOne({"_id": ObjectID(req.body.theme_id)},(err,result) => {
@@ -256,12 +255,12 @@ app.delete(base + "/theme",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if (r1 == "err") return res.status(500).send("Internal Error")
-  res.json({result: "success"})
+  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
+  res.json({result:"ok",status:200})
 })
 
 app.get(base + "/theme/list",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
 
   const r1 = await (new Promise((resolve,reject) => {
     db.collection("theme").find().toArray((err,result) => {
@@ -271,8 +270,8 @@ app.get(base + "/theme/list",async (req,res) => {
   })
   ).catch((e) => e)
 
-  if (r1 == "err") return res.status(500).send("Internal Error")
-  res.json({result: "success",list: r1})
+  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
+  res.json({result: "ok",status:200,list: r1})
 })
 
 
@@ -281,10 +280,10 @@ app.get(base + "/theme/list",async (req,res) => {
 // =====================
 
 app.get(base + "/image", async (req, res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.query.hasOwnProperty("image_id")) return res.status(405).send("Invalid parameter")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
+  if(!req.query.hasOwnProperty("image_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
 
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_id)) return res.status(404).send("Not Found")
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_id)) return res.status(404).json({result:"err",status:400,err:"not found"})
 
   const r1 = await (new Promise((resolve,reject) => {
     fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_id, function(err, data) {
@@ -294,7 +293,7 @@ app.get(base + "/image", async (req, res) => {
   })
   ).catch((e) => e)
 
-  if(r1 == "err") return res.status(500).send("Internal Error")
+  if(r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
 
   res.setHeader('Content-Type', mime.getType(req.query.image_name));
   res.send(r1);
@@ -302,28 +301,28 @@ app.get(base + "/image", async (req, res) => {
 })
 
 app.post(base + "/image", (req, res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
   uploader(req,res,(err) => {
-    if(err) return res.status(405).send("Invalid file");
-    res.json({result: "success",image_id: req.uniqid})
+    if(err) return res.status(405).json({result:"err",status:405,err:"invalid file"})
+    res.json({result: "ok",status:200,image_id: req.uniqid})
   })
 })
 
 app.delete(base + "/image", async (req, res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.body.hasOwnProperty("image_id")) return res.status(405).send("Invalid parameter")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
+  if(!req.body.hasOwnProperty("image_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
 
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_id)) return res.status(404).send("Not Found")
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_id)) return res.status(404).json({result:"err",status:404,err:"not found"})
   fs.removeSync('./images/' + req.session.server_id+ '/' + req.body.image_id)
 
-  res.send("success");
+  res.json({result:"ok",status:200})
 })
 
 app.get(base + "/image/list", (req,res) => {
-  if(!hasSession(req)) return res.status(403).send("Forbidden")
+  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
   fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
-    if (err) return res.status(500).send("Internal Error")
-    return res.json({images: files});
+    if (err) return res.status(500).json({result:"err",status:500,err:"internal error"})
+    return res.json({result:"ok",status:200,images: files});
   });
 })
 
