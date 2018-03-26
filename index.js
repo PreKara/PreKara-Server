@@ -260,6 +260,21 @@ app.delete(base + "/theme",async (req,res) => {
   res.json({result: "success"})
 })
 
+app.get(base + "/theme/list",async (req,res) => {
+  if(!hasSession(req)) return res.status(403).send("Forbidden")
+
+  const r1 = await (new Promise((resolve,reject) => {
+    db.collection("theme").find().toArray((err,result) => {
+      if (err) return reject("err")
+      resolve(result);
+    })
+  })
+  ).catch((e) => e)
+
+  if (r1 == "err") return res.status(500).send("Internal Error")
+  res.json({result: "success",list: r1})
+})
+
 
 // =====================
 //        image

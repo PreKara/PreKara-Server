@@ -79,6 +79,18 @@ describe('DB', function() {
       })
     })
   })
+  it('Get Theme List', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/theme/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(err,null)
+      assert.equal(res.statusCode,200)
+      assert.equal(JSON.parse(body).list.length,1)
+      done()
+    })
+  })
   it('Delete Theme', function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/theme",
