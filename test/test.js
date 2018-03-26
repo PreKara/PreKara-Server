@@ -3,11 +3,14 @@ const request = require("request")
 const index = require("../index.js")
 const mongodb = require('mongodb')
 const MongoClient = mongodb.MongoClient
+const fs = require("fs-extra")
+const hashFile = require('hash-file');
 
 let db
 let client
 let cookie
-let theme
+let theme_id
+let image_id
 
 MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
   if(err) console.log("err")
@@ -68,7 +71,7 @@ describe('DB', function() {
     };
     request.post(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
-      theme = body.theme_id
+      theme_id = body.theme_id
       db.collection("theme").findOne({theme:"test_theme"},(err,result) => {
         assert.equal(err == null,true)
         assert.equal(result != null,true)
@@ -80,7 +83,7 @@ describe('DB', function() {
     var options = {
       uri: "http://localhost:3000/api/v1/theme",
       headers: {"Content-type": "application/json","Cookie": cookie},
-      json: {"theme_id":theme}
+      json: {"theme_id":theme_id}
     };
     request.delete(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
@@ -89,6 +92,63 @@ describe('DB', function() {
         assert.equal(result, null)
         done()
       })
+    })
+  })
+  it('Post Image', function (done) {
+    request.get("https://raw.githubusercontent.com/KawakawaRitsuki/Image/master/PreKara-banner-server.png", {encoding: 'binary'}, function(error, response, body) {
+      fs.writeFile('image.png', body, 'binary', function (err) {
+        assert.equal(err,null)
+        var formData = {
+          image: {
+            value:  fs.createReadStream('./image.png'),
+            options: {
+              filename: 'image.png',
+              contentType: 'image/png'
+            }
+          }
+        };
+        request.post({url:'http://localhost:3000/api/v1/image', formData: formData,headers: {"Cookie": cookie}}, function optionalCallback(err2, res, body) {
+          assert.equal(err2,null)
+          assert.equal(res.statusCode,200)
+          image_id = JSON.parse(body).image_id
+          done()
+        });
+      })
+    })
+  })
+  it('Get Image',function (done) {
+    request.get("http://localhost:3000/api/v1/image?image_id=" + image_id, {encoding: 'binary',headers: {"Cookie": cookie}}, function(error, response, body) {
+      assert.equal(response.statusCode,200)
+      fs.writeFile('image2.png', body, 'binary', function (err) {
+        assert.equal(err,null)
+        assert.equal(hashFile.sync('./image.png'),hashFile.sync('./image.png'))
+        fs.removeSync('./image.png')
+        fs.removeSync('./image2.png')
+        done()
+      });
+    });
+  })
+  it('Delete Image', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/image",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"image_id":image_id}
+    };
+    request.delete(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      done()
+    })
+  })
+  it('Get Image List',function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/image/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(err,null)
+      assert.equal(res.statusCode,200)
+      assert.equal(JSON.parse(body).images.length,0)
+      done()
     })
   })
   it('Revoke Session', function (done) {
@@ -143,7 +203,3 @@ describe('DB', function() {
   });
 });
 
-// 画像POST
-// 画像取得 => ハッシュで同一性チェック
-// 画像一覧取得
-// 画像削除

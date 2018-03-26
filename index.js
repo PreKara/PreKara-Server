@@ -32,7 +32,8 @@ const storage = multer.diskStorage({
     cb(null, './images/' + req.session.server_id + '/')
   },
   filename: function (req, file, cb) {
-    cb(null, uniqid() + path.extname(file.originalname))
+    req.uniqid = uniqid() + path.extname(file.originalname)
+    cb(null, req.uniqid)
   }
 })
 
@@ -266,13 +267,12 @@ app.delete(base + "/theme",async (req,res) => {
 
 app.get(base + "/image", async (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.query.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
+  if(!req.query.hasOwnProperty("image_id")) return res.status(405).send("Invalid parameter")
 
-
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_name)) return res.status(404).send("Not Found")
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_id)) return res.status(404).send("Not Found")
 
   const r1 = await (new Promise((resolve,reject) => {
-    fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_name, function(err, data) {
+    fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_id, function(err, data) {
       if(err) return reject("err")
       resolve(data)
     });
@@ -288,19 +288,18 @@ app.get(base + "/image", async (req, res) => {
 
 app.post(base + "/image", (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
-
   uploader(req,res,(err) => {
     if(err) return res.status(405).send("Invalid file");
-    res.send("success")
+    res.json({result: "success",image_id: req.uniqid})
   })
 })
 
 app.delete(base + "/image", async (req, res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
-  if(!req.body.hasOwnProperty("image_name")) return res.status(405).send("Invalid parameter")
+  if(!req.body.hasOwnProperty("image_id")) return res.status(405).send("Invalid parameter")
 
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_name)) return res.status(404).send("Not Found")
-  fs.removeSync('./images/' + req.session.server_id+ '/' + req.body.image_name)
+  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_id)) return res.status(404).send("Not Found")
+  fs.removeSync('./images/' + req.session.server_id+ '/' + req.body.image_id)
 
   res.send("success");
 })
@@ -309,7 +308,7 @@ app.get(base + "/image/list", (req,res) => {
   if(!hasSession(req)) return res.status(403).send("Forbidden")
   fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
     if (err) return res.status(500).send("Internal Error")
-    return res.send(JSON.stringify(files));
+    return res.json({images: files});
   });
 })
 
