@@ -192,6 +192,10 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
+        405:
+          description: "Invalid parameter"
+        409:
+          description: "Conflict"
     delete:
       tags:
       - "presenter"
@@ -214,6 +218,10 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
+        404:
+          description: "Not Found"
+        405:
+          description: "Invalid parameter"
   /presenter/list:
     get:
       tags:
@@ -289,9 +297,6 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
-        404:
-          description: "Not Found"
-
   /image:
     get:
       tags:
