@@ -314,4 +314,58 @@ paths:
           description: "Forbidden"
         404:
           description: "Not Found"
-
+  /control/presentation/start:
+    get:
+      tags:
+      - "control"
+      summary: "プレゼン開始"
+      operationId: "startPresentation"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /control/presentation/stop:
+    get:
+      tags:
+      - "control"
+      summary: "プレゼン停止"
+      operationId: "stopPresentation"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /control/presentation/next:
+    get:
+      tags:
+      - "control"
+      summary: "次の人へ"
+      operationId: "nextPresentation"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /control/slide/start:
+    get:
+      tags:
+      - "control"
+      summary: "スライド開始"
+      operationId: "startSlide"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /control/slide/stop:
+    get:
+      tags:
+      - "control"
+      summary: "スライド終了"
+      operationId: "stopSlide"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
