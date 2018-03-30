@@ -30,7 +30,7 @@ module.exports = (db) => {
         req.session.server_id = result._id
         fs.mkdirsSync('./images/' + result._id + '/');
         resolve(result._id);
-        })
+      })
     })
     ).catch((e) => e)
 

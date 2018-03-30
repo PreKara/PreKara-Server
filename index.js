@@ -18,16 +18,6 @@ const
 
 const base = "/api/v1"
 
-
-let db
-let c
-
-exports.finish = () => {
-  s.close()
-  c.close()
-  mdb.close()
-}
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './images/' + req.session.server_id + '/')
@@ -44,11 +34,11 @@ const uploader = multer({ storage: storage, fileFilter: function (req, file, cb)
   cb(null, true)
 }}).single("image");
 
-MongoClient.connect('mongodb://localhost:27017/prekara',(err,client) => {
-  if(err) console.log("err")
-  db = client.db('prekara');
-  c = client
-})
+
+exports.finish = () => {
+  s.close()
+  mdb.close()
+}
 
 const mdb = mongojs('prekara', ['server'])
 
@@ -60,88 +50,14 @@ app.use(express.static('public'))
 
 const s = app.listen(process.env.PORT || 3000,function(){})
 
-
-// =====================
-//        Version
-// =====================
-
-app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
-
-// =====================
-//         APIs
-// =====================
-
 const server = require('./routes/server')(mdb),
   session = require('./routes/session')(mdb),
-  theme = require('./routes/theme')(mdb)
+  theme = require('./routes/theme')(mdb),
+  image = require('./routes/image')(uploader)
 
 app.use(base + "/server",server)
 app.use(base + "/session",session)
 app.use(base + "/theme",theme)
+app.use(base + "/image",image)
 
-
-// =====================
-//        image
-// =====================
-
-app.get(base + "/image", async (req, res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  if(!req.query.hasOwnProperty("image_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
-
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.query.image_id)) return res.status(404).json({result:"err",status:400,err:"not found"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_id, function(err, data) {
-      if(err) return reject("err")
-      resolve(data)
-    });
-  })
-  ).catch((e) => e)
-
-  if(r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-
-  res.setHeader('Content-Type', mime.getType(req.query.image_id));
-  res.send(r1);
-  res.end();
-})
-
-app.post(base + "/image", (req, res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  uploader(req,res,(err) => {
-    if(err) return res.status(405).json({result:"err",status:405,err:"invalid file"})
-    if(!req.hasOwnProperty("uniqid")) return res.json({result: "err",status: 405,err:"invalid file"})
-    res.json({result: "ok",status:200,image_id: req.uniqid})
-  })
-})
-
-app.delete(base + "/image", async (req, res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  if(!req.body.hasOwnProperty("image_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
-
-  if(!isExist('./images/' + req.session.server_id+ '/' + req.body.image_id)) return res.status(404).json({result:"err",status:404,err:"not found"})
-  fs.removeSync('./images/' + req.session.server_id+ '/' + req.body.image_id)
-
-  res.json({result:"ok",status:200})
-})
-
-app.get(base + "/image/list", (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
-    if (err) return res.status(500).json({result:"err",status:500,err:"internal error"})
-    return res.json({result:"ok",status:200,images: files});
-  });
-})
-
-function hasSession(req){
-  return req.session.hasOwnProperty("server_id")
-}
-
-function isExist(file) {
-  try {
-    fs.statSync(file);
-    return true
-  } catch(err) {
-    if(err.code === 'ENOENT') return false
-  }
-}
-
+app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
