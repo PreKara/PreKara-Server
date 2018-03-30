@@ -178,7 +178,7 @@ paths:
       parameters:
       - in: "body"
         name: "body"
-        required: "true"
+        required: true
         schema:
           type: "object"
           required:
@@ -200,7 +200,7 @@ paths:
       parameters:
       - in: "body"
         name: "body"
-        required: "true"
+        required: true
         schema:
           type: "object"
           required:
