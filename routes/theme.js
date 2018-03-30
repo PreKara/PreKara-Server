@@ -2,8 +2,6 @@ const
   router = require('express').Router(),
   mongojs = require('mongojs'),
   ObjectID = mongojs.ObjectID,
-  crypto = require('crypto'),
-  fs = require("fs-extra"),
   tool = require("../tool")
 
   module.exports = (db) => {

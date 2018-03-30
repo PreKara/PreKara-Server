@@ -1,8 +1,5 @@
 const
   router = require('express').Router(),
-  mongojs = require('mongojs'),
-  ObjectID = mongojs.ObjectID,
-  crypto = require('crypto'),
   fs = require("fs-extra"),
   multer = require('multer'),
   uniqid = require('uniqid'),
