@@ -21,22 +21,20 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 describe('DB', function() {
   this.timeout(5000);
   it('New Server', function (done) {
-    setTimeout(() => {
-      var options = {
-        uri: "http://localhost:3000/api/v1/server",
-        headers: {"Content-type": "application/json"},
-        json: {"server_name": "test1","password": "test"}
-      };
-      request.post(options,(err,res,body) => {
-        assert.equal(res.statusCode,200)
-        cookie = res.headers['set-cookie'][0];
-        db.collection("server").findOne({server_name:"test1"},(err,result) => {
-          assert.equal(err == null,true)
-          assert.equal(result != null,true)
-          done()
-        })
+    var options = {
+      uri: "http://localhost:3000/api/v1/server",
+      headers: {"Content-type": "application/json"},
+      json: {"server_name": "test1","password": "test"}
+    };
+    request.post(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      cookie = res.headers['set-cookie'][0];
+      db.collection("server").findOne({server_name:"test1"},(err,result) => {
+        assert.equal(err == null,true)
+        assert.equal(result != null,true)
+        done()
       })
-    }, 1000);
+    })
   });
   it('Edit Server', function (done) {
     var options = {
