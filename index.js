@@ -72,72 +72,12 @@ app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
 // =====================
 
 const server = require('./routes/server')(mdb),
-  session = require('./routes/session')(mdb)
+  session = require('./routes/session')(mdb),
+  theme = require('./routes/theme')(mdb)
 
 app.use(base + "/server",server)
 app.use(base + "/session",session)
-
-// =====================
-//        theme
-// =====================
-
-app.post(base + "/theme",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  if(!req.body.hasOwnProperty("theme")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("theme").findOne({theme:req.body.theme},(err,result) => {
-      if(err)            return reject("err")
-      if(result != null) return reject("found")
-      resolve(null)
-    })
-  })
-  ).catch((e) => e)
-
-  if(r1 == "found") return res.status(409).json({result:"err",status:409,err:"conflict"})
-  if(r1 == "err")       return res.status(500).json({result:"err",status:500,err:"internal error"})
-
-  const r2 = await (new Promise((resolve,reject) => {
-    db.collection("theme").insert({theme: req.body.theme},(err,result) => {
-      if(err) return reject("err")
-      resolve(result.ops[0]._id);
-    })
-  })
-  ).catch((e) => e)
-
-  if(r2 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  res.json({result: "ok",status:200,theme_id: r2})
-})
-app.delete(base + "/theme",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  if(!req.body.hasOwnProperty("theme_id")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("theme").deleteOne({"_id": ObjectID(req.body.theme_id)},(err,result) => {
-      if (err) return reject("err")
-      resolve(null);
-    })
-  })
-  ).catch((e) => e)
-
-  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  res.json({result:"ok",status:200})
-})
-
-app.get(base + "/theme/list",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("theme").find().toArray((err,result) => {
-      if (err) return reject("err")
-      resolve(result);
-    })
-  })
-  ).catch((e) => e)
-
-  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  res.json({result: "ok",status:200,list: r1})
-})
+app.use(base + "/theme",theme)
 
 
 // =====================
