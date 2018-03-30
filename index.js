@@ -2,7 +2,7 @@
 
 const
   express = require('express'),
-  session = require('express-session'),
+  express_session = require('express-session'),
   bodyParser = require('body-parser'),
   mongodb = require('mongodb'),
   mongojs = require('mongojs'),
@@ -20,15 +20,11 @@ const base = "/api/v1"
 
 
 let db
-let client
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(express.static('public'))
+let c
 
 exports.finish = () => {
-  server.close()
-  client.close()
+  s.close()
+  c.close()
   mdb.close()
 }
 
@@ -48,23 +44,21 @@ const uploader = multer({ storage: storage, fileFilter: function (req, file, cb)
   cb(null, true)
 }}).single("image");
 
-app.use(session({
-  secret: 'ojimizucoffee',
-  resave: false,
-  saveUninitialized: false
-}))
-
-MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
+MongoClient.connect('mongodb://localhost:27017/prekara',(err,client) => {
   if(err) console.log("err")
-  db = c.db('prekara');
-  client = c
+  db = client.db('prekara');
+  c = client
 })
 
 const mdb = mongojs('prekara', ['server'])
 
 app.disable('x-powered-by')
+app.use(express_session({secret: 'ojimizucoffee', resave: false, saveUninitialized: false}))
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'))
 
-const server = app.listen(process.env.PORT || 3000,function(){})
+const s = app.listen(process.env.PORT || 3000,function(){})
 
 
 // =====================
@@ -77,68 +71,11 @@ app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
 //         APIs
 // =====================
 
-const routeServer = require('./routes/server')(mdb)
-app.use(base + "/server",routeServer)
+const server = require('./routes/server')(mdb),
+  session = require('./routes/session')(mdb)
 
-// Delete Server
-
-app.delete(base + "/server",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("server").deleteOne({"_id": ObjectID(req.session.server_id)},(err,result) => {
-      if (err) return reject("err")
-      resolve(null);
-    })
-  })
-  ).catch((e) => e)
-
-  if (r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  fs.removeSync('./images/' + req.session.server_id + '/');
-  req.session.destroy();
-  res.json({result:"ok",status:200});
-
-})
-
-// =====================
-//        Session
-// =====================
-
-// Get Session
-
-app.get(base + "/session",(req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  res.json({result:"ok",status:200,server_id: req.session.server_id})
-})
-
-app.post(base + "/session",async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).json({result:"err",status:405,err:"invalid parameter"})
-
-  const sha512_req = crypto.createHash('sha512')
-  sha512_req.update(req.body.password)
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-      if(err)            return reject("err")
-      if(result == null) return reject("notfound")
-      resolve(result)
-    })
-  })
-  ).catch((e) => e)
-
-  if(r1 == "notfound")                        return res.status(404).json({result:"err",status:404,err:"not found"})
-  if(r1 == "err")                             return res.status(500).json({result:"err",status:500,err:"internal error"})
-  if(r1.password != sha512_req.digest('hex')) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-
-  req.session.server_id = r1._id
-  res.json({result:"ok",status:200,server_id: r1._id})
-})
-
-app.delete(base + "/session",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-  req.session.destroy();
-  res.json({result:"ok",status:200})
-})
+app.use(base + "/server",server)
+app.use(base + "/session",session)
 
 // =====================
 //        theme
