@@ -295,7 +295,7 @@ app.get(base + "/image", async (req, res) => {
 
   if(r1 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
 
-  res.setHeader('Content-Type', mime.getType(req.query.image_name));
+  res.setHeader('Content-Type', mime.getType(req.query.image_id));
   res.send(r1);
   res.end();
 })
@@ -304,6 +304,7 @@ app.post(base + "/image", (req, res) => {
   if(!hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
   uploader(req,res,(err) => {
     if(err) return res.status(405).json({result:"err",status:405,err:"invalid file"})
+    if(!req.hasOwnProperty("uniqid")) return res.json({result: "err",status: 405,err:"invalid file"})
     res.json({result: "ok",status:200,image_id: req.uniqid})
   })
 })

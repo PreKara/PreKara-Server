@@ -131,10 +131,10 @@ describe('DB', function() {
             }
           }
         };
-        request.post({url:'http://localhost:3000/api/v1/image', formData: formData,headers: {"Cookie": cookie}}, function optionalCallback(err2, res, body) {
+        request.post({url:'http://localhost:3000/api/v1/image', formData: formData,headers: {"Cookie": cookie}}, function optionalCallback(err2, res, bod) {
           assert.equal(err2,null)
           assert.equal(res.statusCode,200)
-          image_id = JSON.parse(body).image_id
+          image_id = JSON.parse(bod).image_id
           done()
         });
       })
