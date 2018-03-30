@@ -5,6 +5,7 @@ const
   session = require('express-session'),
   bodyParser = require('body-parser'),
   mongodb = require('mongodb'),
+  mongojs = require('mongojs'),
   ObjectID = mongodb.ObjectID,
   MongoClient = mongodb.MongoClient,
   crypto = require('crypto'),
@@ -14,6 +15,9 @@ const
   fs = require("fs-extra"),
   mime = require("mime"),
   app = express()
+
+const base = "/api/v1"
+
 
 let db
 let client
@@ -25,6 +29,7 @@ app.use(express.static('public'))
 exports.finish = () => {
   server.close()
   client.close()
+  mdb.close()
 }
 
 const storage = multer.diskStorage({
@@ -55,11 +60,12 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
   client = c
 })
 
+const mdb = mongojs('prekara', ['server'])
+
 app.disable('x-powered-by')
 
 const server = app.listen(process.env.PORT || 3000,function(){})
 
-const base = "/api/v1"
 
 // =====================
 //        Version
@@ -68,89 +74,11 @@ const base = "/api/v1"
 app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
 
 // =====================
-//        Server
+//         APIs
 // =====================
 
-// New Server
-
-app.post(base + "/server", async (req,res) => {
-  if(!req.body.hasOwnProperty("server_name") || !req.body.hasOwnProperty("password")) return res.status(405).json({result:"err",status:405, err:"invalid parameter"})
-
-  const r1 = await (new Promise((resolve,reject) => {
-    db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-      if(err)            return reject("err")
-      if(result != null) return reject("found")
-      resolve(null)
-    })
-  })
-  ).catch((e) => e)
-
-  if(r1 == "found") return res.status(409).json({result: "err",status:409,err: "conflict"})
-  if(r1 == "err")       return res.status(500).json({result: "err",status:500 , err: "internal error"})
-
-  const r2 = await (new Promise((resolve,reject) => {
-    const sha512 = crypto.createHash('sha512')
-    sha512.update(req.body.password)
-    db.collection("server").insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
-      if(err) return reject("err")
-      req.session.server_id = result.ops[0]._id
-      fs.mkdirsSync('./images/' + result.ops[0]._id + '/');
-      resolve(result.ops[0]._id);
-    })
-  })
-  ).catch((e) => e)
-
-  if(r2 == "err") return res.status(500).json({result: "err",status:500, err:"internal error"})
-  res.json({result:"ok",status:200,server_id: r2})
-})
-
-// Edit Server
-
-app.put(base + "/server",async (req,res) => {
-  if(!hasSession(req)) return res.status(403).json({result:"err",status:403, err:"forbidden"})
-  if(!req.body.hasOwnProperty("server_name") && !req.body.hasOwnProperty("password")) return res.status(405).json({result: "err",status:405,err: "invalid parameter"})
-
-  if(req.body.hasOwnProperty("server_name")){
-    const r1 = await (new Promise((resolve,reject) => {
-      db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
-        if(err)            return reject("err")
-        if(result != null) return reject("found")
-        resolve(null)
-      })
-    })
-    ).catch((e) => e)
-
-    if (r1 == "found") return res.status(409).json({result:"err",status:409, err:"conflict"})
-    if (r1 == "err")    return res.status(500).json({result:"err",status:500, err:"internal error"})
-  }
-
-  if(req.body.hasOwnProperty("server_name")) {
-    const r2 = await (new Promise((resolve,reject) => {
-      db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"server_name": req.body.server_name}},(err,result) => {
-        if(err) return reject("err")
-        resolve(null);
-      })
-    })
-    ).catch((e) => e);
-    if(r2 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  }
-
-  if(req.body.hasOwnProperty("password")){
-    const r3 = await (new Promise((resolve,reject) => {
-      const sha512 = crypto.createHash('sha512')
-      sha512.update(req.body.password)
-      db.collection("server").updateOne({"_id": ObjectID(req.session.server_id)},{$set: {"password": sha512.digest('hex')}},(err,result) => {
-        if(err) return reject("err")
-        resolve(null);
-      })
-    })
-    ).catch((e) => e)
-    if(r3 == "err") return res.status(500).json({result:"err",status:500,err:"internal error"})
-  }
-
-  res.json({result:"ok",status:200})
-
-})
+const routeServer = require('./routes/server')(mdb)
+app.use(base + "/server",routeServer)
 
 // Delete Server
 

@@ -47,7 +47,7 @@ describe('DB', function() {
     request.put(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
       db.collection("server").findOne({server_name:"test2"},(err,result) => {
-        assert.equal(err == null,true)
+        assert.equal(err, null)
         assert.equal(result != null,true)
         done()
       })
