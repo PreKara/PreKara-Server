@@ -10,6 +10,8 @@ tags:
   description: "サーバー操作"
 - name: "session"
   description: "セッション操作"
+- name: "presenter"
+  description: "プレゼンター操作"
 - name: "theme"
   description: "お題操作"
 - name: "image"
@@ -162,6 +164,62 @@ paths:
       operationId: "revokeSession"
       produces:
       - "application/json"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /presenter:
+    post:
+      tags:
+      - "presenter"
+      summary: "プレゼンターの追加"
+      operationId: "postPresenter"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: "true"
+        schema:
+          type: "object"
+          required:
+          - "presenter_name"
+          properties:
+            presenter_name:
+              type: "string"
+              example: "mizucoffee"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+    delete:
+      tags:
+      - "presenter"
+      summary: "プレゼンターの削除"
+      operationId: "deletePresenter"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: "true"
+        schema:
+          type: "object"
+          required:
+          - "presenter_name"
+          properties:
+            presenter_name:
+              type: "string"
+              example: "mizucoffee"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /presenter/list:
+    get:
+      tags:
+      - "presenter"
+      summary: "プレゼンター一覧"
+      operationId: "presenterList"
       responses:
         200:
           description: "Success"
