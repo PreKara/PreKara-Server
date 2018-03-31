@@ -47,11 +47,13 @@ const s = app.listen(process.env.PORT || 3000,function(){})
 const server = require('./routes/server')(db),
   session = require('./routes/session')(db),
   theme = require('./routes/theme')(db),
+  presenter = require('./routes/presenter')(db),
   image = require('./routes/image')(uploader)
 
 app.use(base + "/server",server)
 app.use(base + "/session",session)
 app.use(base + "/theme",theme)
+app.use(base + "/presenter",presenter)
 app.use(base + "/image",image)
 
 app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))
