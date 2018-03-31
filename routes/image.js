@@ -19,7 +19,7 @@ module.exports = (uploader) => {
       fs.readFile('./images/' + req.session.server_id+ '/' + req.query.image_id, function(err, data) {
         if(err) return reject("err")
         resolve(data)
-     });
+      });
     })
     ).catch((e) => e)
 
@@ -51,9 +51,9 @@ module.exports = (uploader) => {
 
   router.get("/list", (req,res) => {
     if(!tool.hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-      fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
+    fs.readdir('./images/' + req.session.server_id + '/', function(err, files){
       if (err) return res.status(500).json({result:"err",status:500,err:"internal error"})
-     return res.json({result:"ok",status:200,images: files});
+      return res.json({result:"ok",status:200,images: files});
     });
   })
 
