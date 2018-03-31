@@ -122,6 +122,64 @@ describe('DB', function() {
       done()
     })
   })
+  it('Post Presenter', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/presenter",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"presenter": "test_presenter"}
+    };
+    request.post(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      assert.equal(err,null)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
+        assert.equal(err, null)
+        assert.equal(result != null,true)
+        assert.equal(result.presenter[0],"test_presenter")
+        done()
+      })
+    })
+  })
+  it('Get Theme Presenter', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/presenter/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      assert.equal(err,null)
+      assert.equal(JSON.parse(body).presenter[0],"test_presenter")
+      done()
+    })
+  })
+  it('Delete Presenter', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/presenter",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+      json: {"presenter":"test_presenter"}
+    };
+    request.delete(options,(err,res,body) => {
+      assert.equal(res.statusCode,200)
+      assert.equal(err,null)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
+        assert.equal(err, null)
+        assert.equal(result != null,true)
+        assert.equal(result.presenter.length, 0)
+        done()
+      })
+    })
+  })
+  it('Get Presenter List (no presenter)', function (done) {
+    var options = {
+      uri: "http://localhost:3000/api/v1/presenter/list",
+      headers: {"Content-type": "application/json","Cookie": cookie},
+    };
+    request.get(options,(err,res,body) => {
+      assert.equal(err,null)
+      assert.equal(res.statusCode,200)
+      assert.equal(JSON.parse(body).presenter.length,0)
+      done()
+    })
+  })
   it('Post Image', function (done) {
     request.get("https://raw.githubusercontent.com/KawakawaRitsuki/Image/master/PreKara-banner-server.png", {encoding: 'binary'}, function(error, response, body) {
       fs.writeFile('image.png', body, 'binary', function (err) {
