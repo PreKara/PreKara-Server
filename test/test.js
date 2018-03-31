@@ -3,13 +3,15 @@ const request = require("request")
 const index = require("../index.js")
 const mongodb = require('mongodb')
 const MongoClient = mongodb.MongoClient
+const mongojs = require('mongojs')
 const fs = require("fs-extra")
 const hashFile = require('hash-file');
+
+const mdb = mongojs('prekara',['server'])
 
 let db
 let client
 let cookie
-let theme_id
 let image_id
 
 MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
@@ -19,7 +21,6 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 })
 
 describe('DB', function() {
-  this.timeout(5000);
   it('New Server', function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/server",
@@ -28,9 +29,10 @@ describe('DB', function() {
     };
     request.post(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
+      assert.equal(err,null)
       cookie = res.headers['set-cookie'][0];
-      db.collection("server").findOne({server_name:"test1"},(err,result) => {
-        assert.equal(err == null,true)
+      mdb.server.findOne({server_name:"test1"},(err,result) => {
+        assert.equal(err, null)
         assert.equal(result != null,true)
         done()
       })
@@ -44,7 +46,8 @@ describe('DB', function() {
     };
     request.put(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
-      db.collection("server").findOne({server_name:"test2"},(err,result) => {
+      assert.equal(err,null)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
         assert.equal(err, null)
         assert.equal(result != null,true)
         done()
@@ -69,10 +72,11 @@ describe('DB', function() {
     };
     request.post(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
-      theme_id = body.theme_id
-      db.collection("theme").findOne({theme:"test_theme"},(err,result) => {
-        assert.equal(err == null,true)
+      assert.equal(err,null)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
+        assert.equal(err, null)
         assert.equal(result != null,true)
+        assert.equal(result.theme[0],"test_theme")
         done()
       })
     })
@@ -83,9 +87,9 @@ describe('DB', function() {
       headers: {"Content-type": "application/json","Cookie": cookie},
     };
     request.get(options,(err,res,body) => {
-      assert.equal(err,null)
       assert.equal(res.statusCode,200)
-      assert.equal(JSON.parse(body).list.length,1)
+      assert.equal(err,null)
+      assert.equal(JSON.parse(body).theme[0],"test_theme")
       done()
     })
   })
@@ -93,13 +97,15 @@ describe('DB', function() {
     var options = {
       uri: "http://localhost:3000/api/v1/theme",
       headers: {"Content-type": "application/json","Cookie": cookie},
-      json: {"theme_id":theme_id}
+      json: {"theme":"test_theme"}
     };
     request.delete(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
-      db.collection("theme").findOne({theme:"test_theme"},(err,result) => {
+      assert.equal(err,null)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
         assert.equal(err, null)
-        assert.equal(result, null)
+        assert.equal(result != null,true)
+        assert.equal(result.theme.length, 0)
         done()
       })
     })
@@ -112,7 +118,7 @@ describe('DB', function() {
     request.get(options,(err,res,body) => {
       assert.equal(err,null)
       assert.equal(res.statusCode,200)
-      assert.equal(JSON.parse(body).list.length,0)
+      assert.equal(JSON.parse(body).theme.length,0)
       done()
     })
   })
@@ -224,14 +230,15 @@ describe('DB', function() {
     };
     request.delete(options,(err,res,body) => {
       assert.equal(res.statusCode,200)
-      db.collection("server").findOne({server_name:"test2"},(err,result) => {
-        assert.equal(err == null,true)
-        assert.equal(result == null,true)
+      mdb.server.findOne({server_name:"test2"},(err,result) => {
+        assert.equal(err,null)
+        assert.equal(result,null)
         done()
       })
     })
   })
   after(function() {
+    mdb.close()
     client.close()
     index.finish()
   });
