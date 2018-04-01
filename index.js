@@ -48,12 +48,16 @@ const server = require('./routes/server')(db),
   session = require('./routes/session')(db),
   theme = require('./routes/theme')(db),
   presenter = require('./routes/presenter')(db),
-  image = require('./routes/image')(uploader)
+  image = require('./routes/image')(uploader),
+  presentation = require('./routes/control/presentation')(db),
+  slide = require('./routes/control/slide')(db)
 
 app.use(base + "/server",server)
 app.use(base + "/session",session)
 app.use(base + "/theme",theme)
 app.use(base + "/presenter",presenter)
 app.use(base + "/image",image)
+app.use(base + "/control/presentation",presentation)
+app.use(base + "/control/slide",slide)
 
 app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))

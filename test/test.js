@@ -21,6 +21,7 @@ MongoClient.connect('mongodb://localhost:27017/prekara',(err,c) => {
 })
 
 describe('DB', function() {
+  this.timeout(5000)
   it('New Server', function (done) {
     var options = {
       uri: "http://localhost:3000/api/v1/server",
