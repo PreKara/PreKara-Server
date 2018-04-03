@@ -182,7 +182,7 @@ paths:
         schema:
           type: "object"
           required:
-          - "presenter_name"
+          - "presenter"
           properties:
             presenter_name:
               type: "string"
@@ -297,15 +297,15 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
-  /image:
+  /image/{image_id}:
     get:
       tags:
       - "image"
       summary: "画像の取得"
       operationId: "getImage"
       parameters:
-      - in: "query"
-        name: "image_name"
+      - in: "path"
+        name: "image_id"
         type: "string"
         description: "取得する画像のファイル名"
         required: true
@@ -316,6 +316,25 @@ paths:
           description: "Forbidden"
         404:
           description: "Not Found"
+    delete:
+      tags:
+      - "image"
+      summary: "画像の削除"
+      operationId: "deleteImage"
+      parameters:
+      - in: "path"
+        name: "image_id"
+        required: true
+        type: "string"
+        description: "削除する画像のファイル名"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+        404:
+          description: "Not Found"
+  /image:
     post:
       tags:
       - "image"
@@ -337,33 +356,6 @@ paths:
         403:
           description: "Forbidden"
         405:
-          description: "Invalid file"
-    delete:
-      tags:
-      - "image"
-      summary: "画像の削除"
-      operationId: "deleteImage"
-      parameters:
-      - in: "body"
-        name: "body"
-        required: true
-        schema:
-          type: "object"
-          required:
-          - "image_name"
-          properties:
-            image_name:
-              type: "string"
-              example: "example.jpg"
-      responses:
-        200:
-          description: "Success"
-        403:
-          description: "Forbidden"
-        404:
-          description: "Not Found"
-        405:
-          description: "Invalid parameter"
   /image/list:
     get:
       tags:
@@ -375,8 +367,6 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
-        404:
-          description: "Not Found"
   /control/presentation/start:
     get:
       tags:
@@ -405,6 +395,17 @@ paths:
       - "control"
       summary: "次の人へ"
       operationId: "nextPresentation"
+      responses:
+        200:
+          description: "Success"
+        403:
+          description: "Forbidden"
+  /control/slide/next:
+    get:
+      tags:
+      - "control"
+      summary: "次のスライドへ"
+      operationId: "nextSlide"
       responses:
         200:
           description: "Success"

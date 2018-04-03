@@ -9,7 +9,9 @@ const
   uniqid = require('uniqid'),
   path = require('path'),
   mime = require("mime"),
-  app = express()
+  app = express(),
+  http = require('http').Server(app),
+  io = require('socket.io')(http)
 
 const base = "/api/v1"
 
@@ -41,8 +43,25 @@ app.use(express_session({secret: 'ojimizucoffee', resave: false, saveUninitializ
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'))
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "https://prekara.mizucoffee.net/");
+//  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
-const s = app.listen(process.env.PORT || 3000,function(){})
+io.on('connection',(client) => {
+  console.log('connected')
+  client.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);
+  });
+})
+
+
+
+const s = http.listen(process.env.PORT || 3000,function(){})
 
 const server = require('./routes/server')(db),
   session = require('./routes/session')(db),
