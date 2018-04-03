@@ -28,12 +28,15 @@ module.exports = (db) => {
       db.server.insert({server_name: req.body.server_name, password: sha512.digest('hex')},(err,result) => {
         if(err) return reject("err")
         req.session.server_id = result._id
+        req.session.server_name = req.body.server_name
+
         fs.mkdirsSync('./images/' + result._id + '/');
         resolve(result._id);
       })
     })
     ).catch((e) => e)
 
+    tool.imageShuffle(req,db)
     if(r2 == "err") return res.status(500).json({result: "err",status:500, err:"internal error"})
     res.json({result:"ok",status:200,server_id: r2})
   })

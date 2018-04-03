@@ -1,5 +1,5 @@
 const
-  router = require('express').Router(),
+router = require('express').Router(),
   fs = require("fs-extra"),
   multer = require('multer'),
   uniqid = require('uniqid'),
@@ -7,7 +7,7 @@ const
   mime = require("mime"),
   tool = require("../tool")
 
-module.exports = (uploader) => {
+module.exports = (uploader,db) => {
 
   router.get("/:image_id", async (req, res) => {
     if(req.params.image_id == "list") return list(req,res)
@@ -32,9 +32,11 @@ module.exports = (uploader) => {
 
   router.post("/", (req, res) => {
     if(!tool.hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-    uploader(req,res,(err) => {
+    uploader(req,res,async (err) => {
       if(err) return res.status(405).json({result:"err",status:405,err:"invalid file"})
       if(!req.hasOwnProperty("uniqid")) return res.status(405).json({result: "err",status: 405,err:"invalid file"})
+
+      tool.imageShuffle(req,db)
       res.json({result: "ok",status:200,image_id: req.uniqid})
     })
   })

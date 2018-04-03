@@ -8,7 +8,7 @@ const
 module.exports = (db) => {
   router.get("/",(req,res) => {
     if(!tool.hasSession(req)) return res.status(403).json({result:"err",status:403,err:"forbidden"})
-    res.json({result:"ok",status:200,server_id: req.session.server_id})
+    res.json({result:"ok",status:200,server_name: req.session.server_name ,server_id: req.session.server_id})
   })
 
   router.post("/",async (req,res) => {
@@ -18,7 +18,7 @@ module.exports = (db) => {
     sha512_req.update(req.body.password)
 
     const r1 = await (new Promise((resolve,reject) => {
-      db.collection("server").findOne({server_name:req.body.server_name},(err,result) => {
+      db.server.findOne({server_name:req.body.server_name},(err,result) => {
         if(err)            return reject("err")
         if(result == null) return reject("notfound")
         resolve(result)
@@ -31,6 +31,9 @@ module.exports = (db) => {
     if(r1.password != sha512_req.digest('hex')) return res.status(403).json({result:"err",status:403,err:"forbidden"})
 
     req.session.server_id = r1._id
+    req.session.server_name = req.body.server_name
+
+    tool.imageShuffle(req,db)
     res.json({result:"ok",status:200,server_id: r1._id})
   })
 
