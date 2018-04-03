@@ -355,7 +355,6 @@ paths:
           description: "Success"
         403:
           description: "Forbidden"
-        405:
   /image/list:
     get:
       tags:
