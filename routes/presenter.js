@@ -16,6 +16,7 @@ module.exports = (db) => {
         if(p.indexOf(req.body.presenter) != -1) return reject("found")
         p.push(req.body.presenter)
         result.presenter = p
+        result.countp = p.length
         resolve(result)
       })
     })
@@ -50,6 +51,7 @@ module.exports = (db) => {
         })
 
         result.presenter = p
+        result.countp = p.length
         resolve(result)
       })
     })

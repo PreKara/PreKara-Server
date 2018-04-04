@@ -79,10 +79,6 @@ io.on('connection',(client) => {
   }else{
     io.to(client.id).emit('error','session')
   }
-  client.on('chat message', (msg) => {
-    console.log('message: ' + msg);
-    io.emit('chat message', msg);
-  });
 })
 
 
@@ -94,15 +90,13 @@ const server = require('./routes/server')(db),
   theme = require('./routes/theme')(db),
   presenter = require('./routes/presenter')(db),
   image = require('./routes/image')(uploader,db),
-  presentation = require('./routes/control/presentation')(db,io),
-  slide = require('./routes/control/slide')(db,io)
+  control = require('./routes/control')(db,io)
 
 app.use(base + "/server",server)
 app.use(base + "/session",rsession)
 app.use(base + "/theme",theme)
 app.use(base + "/presenter",presenter)
 app.use(base + "/image",image)
-app.use(base + "/control/presentation",presentation)
-app.use(base + "/control/slide",slide)
+app.use(base + "/control",control)
 
 app.get("/api/",(req,res) => res.json({result:"ok",status:200,version:"v1"}))

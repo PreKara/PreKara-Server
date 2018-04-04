@@ -1,5 +1,5 @@
 const
-  router = require('express').Router(),
+router = require('express').Router(),
   mongojs = require('mongojs'),
   ObjectID = mongojs.ObjectID,
   tool = require("../tool")
@@ -16,6 +16,7 @@ module.exports = (db) => {
         if(t.indexOf(req.body.theme) != -1) return reject("found")
         t.push(req.body.theme)
         result.theme = t
+        result.countt = t.length
         resolve(result)
       })
     })
@@ -50,6 +51,7 @@ module.exports = (db) => {
         })
 
         result.theme = t
+        result.countt = t.length
         resolve(result)
       })
     })
