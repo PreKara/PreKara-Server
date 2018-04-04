@@ -73,7 +73,7 @@ app.use(function(req, res, next) {
 
 io.on('connection',(client) => {
   console.log('connected')
-  if(client.request.session) {
+  if(client.request.session.server_id) {
     client.join(client.request.session.server_name)
     tool.imageShuffle(client.request,db)
   }else{

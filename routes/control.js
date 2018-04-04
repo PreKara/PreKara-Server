@@ -73,11 +73,6 @@ module.exports = (db,io) => {
     ).catch((e) => e)
 
     console.log(server.countf)
-    //  req.session.count--
-
-    //tool.setDBCount(db,req.server_id,2)
-    //console.log(tool.getDBCount(db,req.server_id))
-    //    req.session.count
 
     io.sockets.in(req.session.server_name).emit("next", files[server.countf])
     if(server.countf === 0) {
@@ -94,7 +89,7 @@ module.exports = (db,io) => {
         db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": -1 }},{multi: false},(err,res) => {
           if (err) console.log(err)
         })
-      },5000)
+      },180000)
     }
     res.json({result: "ok",status:200,fin:server.fin})
   })
