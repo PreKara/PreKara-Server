@@ -22,5 +22,22 @@ module.exports = {
         if (err) console.log(err)
       })
     })
+  },
+  themeShuffle: (req,db) => {
+    db.server.findOne({_id: require("mongojs").ObjectID(req.session.server_id)},(err,result) => {
+      var f = result.theme || []
+      var s = result.theme[0] || ""
+      do{
+        for(var i = f.length - 1; i > 0; i--){
+          var r = Math.floor(Math.random() * (i + 1));
+          var tmp = f[i];
+          f[i] = f[r];
+          f[r] = tmp;
+        }
+      } while(f[f.length - 1] == s)
+      db.server.update({"_id": require("mongojs").ObjectID(req.session.server_id)},{$set: {"theme": f}},{multi: false},(err,res) => {
+        if (err) console.log(err)
+      })
+    })
   }
 }

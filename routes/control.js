@@ -28,6 +28,7 @@ module.exports = (db,io) => {
       db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"countt": server.theme.length}},{multi: false},(err,res) => {
         if (err) console.log(err)
       })
+      tool.themeShuffle(req,db)
     }else if(server.countt > 0){
       db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"countt": server.countt}},{multi: false},(err,res) => {
         if (err) console.log(err)
@@ -42,7 +43,7 @@ module.exports = (db,io) => {
         if (err) console.log(err)
       })
     }
-    db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": null}},{multi: false},(err,res) => {
+    db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": -1}},{multi: false},(err,res) => {
       if (err) console.log(err)
     })
 
@@ -55,7 +56,8 @@ module.exports = (db,io) => {
 
     let server = await (new Promise((resolve,reject) => {
       db.server.findOne({_id: ObjectID(req.session.server_id)},(err,result) => {
-        db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"countf": --result.countf}},{multi: false},(err,res) => {
+        var c = result.countf > 0 ? --result.countf : -1
+        db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"countf": c }},{multi: false},(err,res) => {
           if (err) console.log(err)
           resolve(result)
         })
@@ -63,7 +65,7 @@ module.exports = (db,io) => {
     })
     ).catch((e) => e)
 
-    if(server.fin === -1) return res.status(405).json({result:"err",status:405,err:"slide is finished"})
+    if(!server.fin) return res.status(405).json({result:"err",status:405,err:"slide is finished"})
 
     let files = await (new Promise((resolve,reject) => {
       db.server.findOne({_id: ObjectID(req.session.server_id)},(err,result) => {
@@ -74,19 +76,19 @@ module.exports = (db,io) => {
 
     console.log(server.countf)
 
-    io.sockets.in(req.session.server_name).emit("next", files[server.countf])
+    if (server.countf > 0)io.sockets.in(req.session.server_name).emit("next", files[server.countf])
     if(server.countf === 0) {
       tool.imageShuffle(req,db)
     }
     console.log("fin: " + server.fin)
-    if(!server.fin){
-      server.fin = Math.round(new Date().getTime() / 1000) + 180000
+    if(server.fin === -1){
+      server.fin = Math.round(new Date().getTime() / 1000) + 180
       db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": server.fin }},{multi: false},(err,res) => {
         if (err) console.log(err)
       })
       setTimeout(() => {
         io.sockets.in(req.session.server_name).emit("stop", "stop");
-        db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": -1 }},{multi: false},(err,res) => {
+        db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"fin": null }},{multi: false},(err,res) => {
           if (err) console.log(err)
         })
       },180000)
