@@ -56,7 +56,11 @@ module.exports = (db,io) => {
 
     let server = await (new Promise((resolve,reject) => {
       db.server.findOne({_id: ObjectID(req.session.server_id)},(err,result) => {
-        var c = result.countf > 0 ? --result.countf : -1
+        var c = 0
+        if(result.countf > 0)
+          c = result.countf - 1
+        else
+          c = -1
         db.server.update({_id: ObjectID(req.session.server_id)},{$set: {"countf": c }},{multi: false},(err,res) => {
           if (err) console.log(err)
           resolve(result)
