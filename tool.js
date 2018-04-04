@@ -11,12 +11,14 @@ module.exports = {
       else
         var s = result.files[0]
       do{
-        for(var i = f.length - 1; i > 0; i--){
-          var r = Math.floor(Math.random() * (i + 1));
-          var tmp = f[i];
-          f[i] = f[r];
-          f[r] = tmp;
-        }
+        shuffle(f)
+//        for(var i = f.length - 1; i > 0; i--){
+//          var r = Math.floor(Math.random() * (i + 1));
+//          var tmp = f[i];
+//          f[i] = f[r];
+//          f[r] = tmp;
+//        }
+        console.log(f[f.length - 1] + " == " + s)
       } while(f[f.length - 1] == s)
       db.server.update({"_id": require("mongojs").ObjectID(req.session.server_id)},{$set: {"files": f,"countf":f.length}},{multi: false},(err,res) => {
         if (err) console.log(err)
@@ -40,4 +42,13 @@ module.exports = {
       })
     })
   }
+}
+function shuffle(a) {
+    var j, x, i;
+    for (i = a.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        x = a[i];
+        a[i] = a[j];
+        a[j] = x;
+    }
 }
