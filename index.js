@@ -16,6 +16,7 @@ const
   MongoStore = require('connect-mongo')(session)
 
 const base = "/api/v1"
+const mongopath = process.env.MONGO_URL || "localhost";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -38,14 +39,14 @@ exports.finish = () => {
   db.close()
 }
 
-const db = mongojs('prekara', ['server'])
+const db = mongojs(mongopath + '/prekara', ['server'])
 
 var sessionMiddleware = session({
   store: new MongoStore({
     db: 'session',
-    host: '127.0.0.1',
+    host: mongopath,
     port: '27017',
-    url: 'mongodb://localhost:27017/prekara'
+    url: 'mongodb://' + mongopath + ':27017/prekara'
   }),
   secret: "ojimizucoffee",
   resave: false,
